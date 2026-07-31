@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, doc, updateDoc, setDoc, query, orderBy, limit, increment, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, setDoc, query, orderBy, limit, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useToast } from '../components/Toast';
 
@@ -149,6 +149,26 @@ export default function Finance() {
             showToast('Gagal menyimpan.', 'error');
         }
         setSaving(false);
+    };
+
+    const handleCompleteTransaction = async (id) => {
+        try {
+            await updateDoc(doc(db, 'transactions', id), { status: 'Completed' });
+            showToast('Status transaksi diperbarui menjadi Selesai (Lunas)!');
+        } catch (e) {
+            showToast('Gagal memperbarui status.', 'error');
+        }
+    };
+
+    const handleDeleteTransaction = async (id) => {
+        if (window.confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
+            try {
+                await deleteDoc(doc(db, 'transactions', id));
+                showToast('Transaksi berhasil dihapus!');
+            } catch (e) {
+                showToast('Gagal menghapus transaksi.', 'error');
+            }
+        }
     };
 
     const handlePrintReceipt = (sale) => {
@@ -412,11 +432,12 @@ export default function Finance() {
                                     <th>Akun</th>
                                     <th style={{ textAlign: 'right' }}>Jumlah</th>
                                     <th style={{ textAlign: 'center' }}>Status</th>
+                                    <th style={{ textAlign: 'center' }}>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {transactions.length === 0 ? (
-                                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-xl)', color: 'var(--color-on-surface-variant)' }}>Belum ada transaksi.</td></tr>
+                                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-xl)', color: 'var(--color-on-surface-variant)' }}>Belum ada transaksi.</td></tr>
                                 ) : transactions.slice(0, 20).map(t => (
                                     <tr key={t.id}>
                                         <td className="text-mono text-muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(t.date)}</td>
@@ -430,6 +451,28 @@ export default function Finance() {
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
                                             <span className={`badge ${t.status === 'Completed' ? 'badge-success' : t.status === 'Pending' ? 'badge-warning' : 'badge-error'}`}>{t.status}</span>
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+                                                {t.status === 'Pending' && (
+                                                    <button
+                                                        className="btn btn-icon"
+                                                        onClick={() => handleCompleteTransaction(t.id)}
+                                                        title="Tandai Selesai / Lunas"
+                                                        style={{ color: 'var(--color-tertiary)' }}
+                                                    >
+                                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>done</span>
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="btn btn-icon"
+                                                    onClick={() => handleDeleteTransaction(t.id)}
+                                                    title="Hapus Transaksi"
+                                                    style={{ color: 'var(--color-error)' }}
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
