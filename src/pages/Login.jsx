@@ -25,10 +25,23 @@ export default function Login() {
         <div className="login-page">
             <div className="login-card">
                 <div className="login-logo">
-                    <div className="login-logo-icon">
-                        <span className="material-symbols-outlined" style={{ fontSize: 48, color: 'var(--color-primary-fixed-dim)' }}>egg</span>
+                    <div className="login-logo-icon-wrap" style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 64,
+                        height: 64,
+                        background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+                        borderRadius: '20px',
+                        boxShadow: '0 4px 12px rgba(217, 119, 6, 0.4)',
+                        marginBottom: 12
+                    }}>
+                        <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.25))' }}>
+                            <path d="M12 2C7.5 2 4 7 4 12s3.5 10 8 10 8-5 8-10S16.5 2 12 2z" fill="rgba(255,255,255,0.15)" />
+                            <path d="M12 6a3 3 0 0 0-3 3" strokeWidth="1.5" strokeOpacity="0.8" strokeLinecap="round" />
+                        </svg>
                     </div>
-                    <div className="login-logo-title">EggERP</div>
+                    <div className="login-logo-title">KareeemEgg</div>
                     <div className="login-logo-sub">Farm-to-Finance Management System</div>
                 </div>
 
@@ -38,7 +51,7 @@ export default function Login() {
                         <input
                             className="form-input"
                             type="email"
-                            placeholder="admin@eggerp.com"
+                            placeholder="admin@kareeemegg.com"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             required

@@ -232,7 +232,7 @@ export default function Finance() {
                 </div>
                 <div class="footer">
                     <p>Terima kasih atas pembelian Anda!</p>
-                    <p>EggERP - Selalu segar dari peternakan</p>
+                    <p>KareeemEgg - Selalu segar dari peternakan</p>
                 </div>
                 <script>
                     window.onload = function() {
@@ -423,7 +423,7 @@ export default function Finance() {
                 </div>
                 <div className="overflow-x-auto">
                     {tab === 'transactions' ? (
-                        <table className="data-table" style={{ minWidth: 700 }}>
+                        <table className="data-table finance-txn-table" style={{ minWidth: 700 }}>
                             <thead>
                                 <tr>
                                     <th>Tanggal</th>
@@ -486,7 +486,7 @@ export default function Finance() {
                         });
 
                         return (
-                            <table className="data-table" style={{ minWidth: 700 }}>
+                            <table className="data-table finance-sales-table" style={{ minWidth: 700 }}>
                                 <thead>
                                     <tr>
                                         <th>Tanggal</th>

@@ -128,7 +128,7 @@ export default function Products() {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="data-table" style={{ minWidth: 700 }}>
+                    <table className="data-table product-table" style={{ minWidth: 700 }}>
                         <thead>
                             <tr>
                                 <th style={{ paddingLeft: 'var(--space-lg)' }}>Nama Produk</th>

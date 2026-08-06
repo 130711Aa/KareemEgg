@@ -298,46 +298,84 @@ table {
   opacity: 0.9;
 }
 
-/* Mobile Bottom Nav */
-.bottom-nav {
+/* Topbar Navigation Menu Button & Dropdown */
+.topbar-menu-btn {
   display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--sidebar-bg);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 100;
-  padding: var(--space-sm) 0;
-}
-
-.bottom-nav-items {
-  display: flex;
-  justify-content: space-around;
+  width: 40px;
+  height: 40px;
   align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.bottom-nav-item {
+.topbar-menu-btn:hover {
+  background: var(--color-surface-container-low);
+}
+
+.topbar-menu-btn .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.topbar-dropdown {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 200px;
+  padding: var(--space-xs) 0;
+  z-index: 200;
   display: flex;
   flex-direction: column;
+}
+
+.dropdown-item {
+  display: flex;
   align-items: center;
-  gap: 2px;
-  padding: var(--space-xs) var(--space-sm);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  color: var(--color-on-surface-variant);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  transition: color 0.2s;
+  width: 100%;
+  text-align: left;
 }
 
-.bottom-nav-item.active {
-  color: var(--color-primary-fixed-dim);
+.dropdown-item:hover {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
 }
 
-.bottom-nav-item .material-symbols-outlined {
-  font-size: 22px;
+.dropdown-item.active {
+  background: var(--color-primary-fixed);
+  color: var(--color-on-primary-container);
+  font-weight: 700;
+}
+
+.dropdown-item .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--color-outline-variant);
+  margin: var(--space-xs) 0;
+}
+
+.dropdown-item.logout {
+  color: var(--color-error);
 }
 
 @media (max-width: 768px) {
@@ -345,8 +383,8 @@ table {
     display: none !important;
   }
 
-  .bottom-nav {
-    display: block;
+  .topbar-menu-btn {
+    display: flex;
   }
 }
 
@@ -506,6 +544,21 @@ table {
 @media (max-width: 600px) {
   .page-header {
     flex-direction: column;
+    align-items: stretch;
+    margin-bottom: var(--space-lg);
+  }
+
+  .page-header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+    width: 100%;
+  }
+
+  .page-header-actions .btn {
+    width: 100%;
+    padding: 8px 6px;
+    font-size: 11px;
   }
 }
 
@@ -604,11 +657,37 @@ table {
 }
 
 @media (max-width: 600px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
 
-  .grid-4,
-  .grid-3,
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .grid-3>*:last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
+
   .grid-2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .kpi-card {
+    padding: var(--space-md);
+    gap: var(--space-xs);
+  }
+
+  .kpi-card-value {
+    font-size: 20px !important;
+    line-height: 28px !important;
+  }
+
+  .kpi-card-label {
+    font-size: 10px;
   }
 }
 
@@ -638,6 +717,8 @@ table {
 
 .card-body {
   padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== BUTTONS ===== */
@@ -736,6 +817,7 @@ table {
   border-radius: 99px;
   font-size: var(--fs-label-md);
   font-weight: var(--fw-label-md);
+  white-space: nowrap;
 }
 
 .badge-success {
@@ -946,13 +1028,12 @@ table {
 
 /* ===== BAR CHART ===== */
 .bar-chart-container {
-  flex: 1;
   display: flex;
   align-items: flex-end;
   gap: var(--space-md);
   padding-top: var(--space-lg);
   position: relative;
-  min-height: 220px;
+  height: 220px;
 }
 
 .bar-chart-bar-group {
@@ -961,7 +1042,7 @@ table {
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  height: 100%;
+  height: 200px;
   justify-content: flex-end;
 }
 
@@ -1253,4 +1334,722 @@ table {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: var(--space-sm);
   }
+}
+
+/* Additional Mobile and Tablet Overrides */
+@media (max-width: 768px) {
+  .resp-fin-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-md) !important;
+  }
+
+  /* Make tables readable and not squished */
+  .data-table td {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  /* Ensure category badges/cells have some horizontal buffer */
+  .data-table td:nth-child(3) {
+    min-width: 120px;
+  }
+}
+
+/* Mobile Table Reflow (Desktop Table to High-Density Card List) */
+@media (max-width: 600px) {
+
+  /* Common adjustments for reflow tables */
+  .data-table.finance-txn-table,
+  .data-table.finance-sales-table,
+  .data-table.inventory-table,
+  .data-table.product-table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+
+  .data-table.finance-txn-table thead,
+  .data-table.finance-sales-table thead,
+  .data-table.inventory-table thead,
+  .data-table.product-table thead {
+    display: none !important;
+  }
+
+  .data-table.finance-txn-table tbody,
+  .data-table.finance-sales-table tbody,
+  .data-table.inventory-table tbody,
+  .data-table.product-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 0 !important;
+  }
+
+  .data-table.finance-txn-table tr,
+  .data-table.finance-sales-table tr,
+  .data-table.inventory-table tr,
+  .data-table.product-table tr {
+    display: grid !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--color-outline-variant) !important;
+    border-radius: 0 !important;
+    padding: var(--space-md) var(--space-md) !important;
+    gap: var(--space-xs) !important;
+  }
+
+  .data-table.finance-txn-table tr:last-child,
+  .data-table.finance-sales-table tr:last-child,
+  .data-table.inventory-table tr:last-child,
+  .data-table.product-table tr:last-child {
+    border-bottom: none !important;
+  }
+
+  .data-table.finance-txn-table tr:hover td,
+  .data-table.finance-sales-table tr:hover td,
+  .data-table.inventory-table tr:hover td,
+  .data-table.product-table tr:hover td {
+    background: transparent !important;
+  }
+
+  .data-table.finance-txn-table td,
+  .data-table.finance-sales-table td,
+  .data-table.inventory-table td,
+  .data-table.product-table td {
+    padding: 0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Empty state table rows override */
+  .data-table tr:has(td[colspan]) {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: none !important;
+    padding: var(--space-md) !important;
+    min-height: 100px !important;
+  }
+
+  .data-table tr:has(td[colspan]) td {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: var(--space-xs) !important;
+    width: 100% !important;
+    text-align: center !important;
+    color: var(--color-on-surface-variant) !important;
+  }
+
+  .data-table tr:has(td[colspan]) .material-symbols-outlined {
+    font-size: 28px !important;
+  }
+
+  /* 1. Transaction Table in Finance Page */
+  .data-table.finance-txn-table tr {
+    grid-template-areas:
+      "date status action"
+      "desc desc desc"
+      "cat cat amount"
+      "acc acc amount" !important;
+    grid-template-columns: 1fr auto auto !important;
+  }
+
+  .data-table.finance-txn-table td:nth-child(1) {
+    grid-area: date;
+    font-size: 11px;
+    color: var(--color-on-surface-variant);
+    font-weight: 500;
+  }
+
+  .data-table.finance-txn-table td:nth-child(2) {
+    grid-area: desc;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--color-on-surface);
+    display: block !important;
+    text-align: left;
+  }
+
+  .data-table.finance-txn-table td:nth-child(3) {
+    grid-area: cat;
+    display: inline-flex !important;
+    justify-content: flex-start;
+  }
+
+  .data-table.finance-txn-table td:nth-child(4) {
+    grid-area: acc;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-on-surface-variant);
+    display: inline-flex !important;
+    justify-content: flex-start;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .data-table.finance-txn-table td:nth-child(5) {
+    grid-area: amount;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-flex !important;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .data-table.finance-txn-table td:nth-child(6) {
+    grid-area: status;
+    display: inline-flex !important;
+    justify-content: center;
+    margin-right: 6px;
+  }
+
+  .data-table.finance-txn-table td:nth-child(7) {
+    grid-area: action;
+    display: inline-flex !important;
+    justify-content: flex-end;
+  }
+
+  /* 2. Sales History Table in Finance Page */
+  .data-table.finance-sales-table tr {
+    display: grid !important;
+    grid-template-areas:
+      "date method action"
+      "cust cust total"
+      "items items total" !important;
+    grid-template-columns: 1fr auto auto !important;
+  }
+
+  .data-table.finance-sales-table td:nth-child(1) {
+    grid-area: date;
+    font-size: 11px;
+    color: var(--color-on-surface-variant);
+    font-weight: 500;
+  }
+
+  .data-table.finance-sales-table td:nth-child(2) {
+    grid-area: cust;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--color-on-surface);
+    display: block !important;
+    text-align: left;
+  }
+
+  .data-table.finance-sales-table td:nth-child(3) {
+    grid-area: method;
+    display: inline-flex !important;
+    justify-content: flex-end;
+    margin-right: 6px;
+  }
+
+  .data-table.finance-sales-table td:nth-child(4) {
+    grid-area: items;
+    font-size: 12px;
+    color: var(--color-on-surface-variant);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+    display: block !important;
+    text-align: left;
+  }
+
+  .data-table.finance-sales-table td:nth-child(5) {
+    grid-area: total;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-flex !important;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .data-table.finance-sales-table td:nth-child(6) {
+    grid-area: action;
+    display: inline-flex !important;
+    justify-content: flex-end;
+  }
+
+  /* 3. Inventory Page Table */
+  .data-table.inventory-table tr {
+    display: grid !important;
+    grid-template-areas:
+      "name name status"
+      "stock min-stock status"
+      "note note action" !important;
+    grid-template-columns: 1fr 1fr auto !important;
+  }
+
+  .data-table.inventory-table td:nth-child(1) {
+    grid-area: name;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--color-on-surface);
+  }
+
+  .data-table.inventory-table td:nth-child(2) {
+    display: none !important;
+  }
+
+  .data-table.inventory-table td:nth-child(3) {
+    grid-area: stock;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-on-surface);
+    display: inline-flex !important;
+    justify-content: flex-start;
+  }
+
+  .data-table.inventory-table td:nth-child(3) .stock-bar-track {
+    display: none !important;
+  }
+
+  .data-table.inventory-table td:nth-child(4) {
+    grid-area: min-stock;
+    font-size: 11px;
+    color: var(--color-on-surface-variant);
+    display: inline-flex !important;
+    justify-content: flex-start;
+  }
+
+  .data-table.inventory-table td:nth-child(5) {
+    grid-area: status;
+    display: inline-flex !important;
+    justify-content: center;
+  }
+
+  .data-table.inventory-table td:nth-child(6) {
+    grid-area: note;
+    font-size: 11px;
+    color: var(--color-on-surface-variant);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+    display: block !important;
+    text-align: left;
+  }
+
+  .data-table.inventory-table td:nth-child(7) {
+    grid-area: action;
+    display: inline-flex !important;
+    justify-content: flex-end;
+  }
+
+  /* 4. Products Page Table */
+  .data-table.product-table tr {
+    display: grid !important;
+    grid-template-areas:
+      "name name sku"
+      "stock stock status"
+      "prices prices action" !important;
+    grid-template-columns: 1fr 1fr auto !important;
+  }
+
+  .data-table.product-table td:nth-child(1) {
+    grid-area: name;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--color-on-surface);
+  }
+
+  .data-table.product-table td:nth-child(2) {
+    grid-area: sku;
+    font-size: 11px;
+    color: var(--color-on-surface-variant);
+    display: inline-flex !important;
+    justify-content: flex-end;
+  }
+
+  .data-table.product-table td:nth-child(3) {
+    display: none !important;
+  }
+
+  .data-table.product-table td:nth-child(4) {
+    grid-area: stock;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-on-surface);
+    display: inline-flex !important;
+    justify-content: flex-start;
+  }
+
+  .data-table.product-table td:nth-child(4) .stock-bar-track {
+    display: none !important;
+  }
+
+  .data-table.product-table td:nth-child(5) {
+    display: none !important;
+  }
+
+  .data-table.product-table td:nth-child(6) {
+    grid-area: prices;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+    display: inline-flex !important;
+    justify-content: flex-start;
+  }
+
+  .data-table.product-table td:nth-child(7) {
+    grid-area: status;
+    display: inline-flex !important;
+    justify-content: center;
+  }
+
+  .data-table.product-table td:nth-child(8) {
+    grid-area: action;
+    display: inline-flex !important;
+    justify-content: flex-end;
+  }
+}
+
+/* ===== ANALYTICS PAGE ===== */
+
+/* Filters */
+.analytics-filters {
+  margin-bottom: var(--space-xl);
+}
+
+.analytics-filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.analytics-filter-tabs {
+  display: flex;
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.analytics-filter-tab {
+  padding: 6px var(--space-md);
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: var(--fs-label-md);
+  font-weight: var(--fw-label-md);
+  letter-spacing: var(--ls-label-md);
+  color: var(--color-on-surface-variant);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.analytics-filter-tab.active {
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.analytics-filter-tab:hover:not(.active) {
+  background: var(--color-surface-container);
+}
+
+.analytics-product-select {
+  height: 36px;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-md);
+  font-size: var(--fs-body-sm);
+  color: var(--color-on-surface);
+  cursor: pointer;
+}
+
+/* Metric Tabs */
+.analytics-metric-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.analytics-metric-tab {
+  padding: 6px var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-label-md);
+  font-weight: var(--fw-label-md);
+  letter-spacing: var(--ls-label-md);
+  color: var(--color-on-surface-variant);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.analytics-metric-tab.active {
+  background: var(--color-primary-fixed);
+  color: var(--color-on-primary-container);
+  border-color: var(--color-primary-container);
+}
+
+.analytics-metric-tab:hover:not(.active) {
+  background: var(--color-surface-container-low);
+}
+
+/* Delta Badge */
+.analytics-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--fs-label-md);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.analytics-delta-up {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.analytics-delta-down {
+  background: var(--color-error-container);
+  color: var(--color-error);
+}
+
+/* Line Chart */
+.analytics-line-chart-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.analytics-line-svg {
+  width: 100%;
+  height: 200px;
+  display: block;
+}
+
+.analytics-chart-xlabels {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-xs) var(--space-xs) 0;
+}
+
+.analytics-chart-xlabel {
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: center;
+  flex: 1;
+}
+
+/* Horizontal Bar (Best sellers) */
+.analytics-horiz-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.analytics-horiz-bar-row {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.analytics-horiz-bar-label {
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  color: var(--color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.analytics-horiz-bar-track {
+  height: 10px;
+  background: var(--color-surface-container-low);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.analytics-horiz-bar-fill {
+  height: 100%;
+  background: var(--color-primary-container);
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.analytics-horiz-bar-value {
+  font-size: var(--fs-label-md);
+  color: var(--color-on-surface-variant);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* Weekday Vertical Bar */
+.analytics-weekday-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  height: 180px;
+  padding-top: var(--space-lg);
+}
+
+.analytics-weekday-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.analytics-weekday-bar-value {
+  font-size: 9px;
+  color: var(--color-on-surface-variant);
+  text-align: center;
+  min-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  width: 100%;
+  text-align: center;
+}
+
+.analytics-weekday-bar {
+  width: 100%;
+  max-width: 40px;
+  background: var(--color-secondary-container);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height 0.5s ease, background 0.2s;
+  cursor: pointer;
+  min-height: 0;
+}
+
+.analytics-weekday-bar:hover {
+  background: var(--color-primary-container);
+}
+
+.analytics-weekday-bar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Bottom grid */
+.analytics-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+/* Empty state */
+.analytics-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  color: var(--color-on-surface-variant);
+  text-align: center;
+  gap: var(--space-xs);
+}
+
+.analytics-empty-state .material-symbols-outlined {
+  font-size: 36px;
+  opacity: 0.4;
+}
+
+.analytics-empty-state p {
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+}
+
+.analytics-empty-state span {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.analytics-empty-chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  font-size: var(--fs-body-sm);
+  color: var(--color-on-surface-variant);
+}
+
+/* Skeleton shimmer */
+.analytics-skeleton {
+  background: linear-gradient(90deg, var(--color-surface-container-low) 25%, var(--color-surface-container) 50%, var(--color-surface-container-low) 75%);
+  background-size: 200% 100%;
+  animation: analytics-shimmer 1.4s infinite;
+  border-radius: var(--radius-md);
+  width: 100%;
+}
+
+@keyframes analytics-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .analytics-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .analytics-filter-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .analytics-product-select {
+    width: 100%;
+  }
+
+  .analytics-horiz-bar-row {
+    grid-template-columns: 80px 1fr auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-filter-tab {
+    padding: 6px var(--space-sm);
+    font-size: 11px;
+  }
+
+  .analytics-horiz-bar-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .analytics-horiz-bar-track {
+    width: 100%;
+  }
+}
+
+/* Line Chart Interactivity */
+.analytics-chart-dot-container:hover .analytics-chart-dot {
+  transform: scale(1.35);
+  border-color: var(--color-primary) !important;
+}
+
+.analytics-chart-dot-container:hover .analytics-chart-tooltip {
+  opacity: 1 !important;
+  visibility: visible !important;
 }

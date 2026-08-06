@@ -162,7 +162,7 @@ export default function Inventory() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="data-table" style={{ minWidth: 640 }}>
+                    <table className="data-table inventory-table" style={{ minWidth: 640 }}>
                         <thead>
                             <tr>
                                 <th style={{ paddingLeft: 'var(--space-lg)' }}>Nama Item</th>

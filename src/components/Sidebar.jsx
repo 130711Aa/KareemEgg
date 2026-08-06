@@ -3,8 +3,9 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 
-const navItems = [
+export const navItems = [
     { to: '/', icon: 'dashboard', label: 'Dashboard' },
+    { to: '/analytics', icon: 'analytics', label: 'Analytics' },
     { to: '/inventory', icon: 'inventory_2', label: 'Inventory' },
     { to: '/products', icon: 'egg', label: 'Products' },
     { to: '/sales', icon: 'payments', label: 'Sales' },
@@ -27,17 +28,28 @@ export default function Sidebar() {
             {/* Desktop Sidebar */}
             <nav className="sidebar">
                 <div className="sidebar-logo">
-                    <span className="material-symbols-outlined sidebar-logo-icon fill">egg</span>
+                    <div className="sidebar-logo-icon-wrap" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 38,
+                        height: 38,
+                        background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+                        borderRadius: '12px',
+                        boxShadow: '0 3px 8px rgba(217, 119, 6, 0.4)',
+                        flexShrink: 0,
+                        marginRight: 6
+                    }}>
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0px 1.5px 1px rgba(0,0,0,0.2))' }}>
+                            <path d="M12 2C7.5 2 4 7 4 12s3.5 10 8 10 8-5 8-10S16.5 2 12 2z" fill="rgba(255,255,255,0.15)" />
+                            <path d="M12 6a3 3 0 0 0-3 3" strokeWidth="1.5" strokeOpacity="0.8" strokeLinecap="round" />
+                        </svg>
+                    </div>
                     <div>
-                        <div className="sidebar-logo-title">EggERP</div>
+                        <div className="sidebar-logo-title">KareeemEgg</div>
                         <div className="sidebar-logo-sub">Farm-to-Finance</div>
                     </div>
                 </div>
-
-                <button className="sidebar-new-batch-btn">
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
-                    New Batch
-                </button>
 
                 <nav className="sidebar-nav">
                     {navItems.map(item => (
@@ -66,23 +78,6 @@ export default function Sidebar() {
                     </button>
                 </div>
             </nav>
-
-            {/* Mobile Bottom Nav */}
-            <div className="bottom-nav">
-                <div className="bottom-nav-items">
-                    {navItems.map(item => (
-                        <NavLink
-                            key={item.to}
-                            to={item.to}
-                            end={item.to === '/'}
-                            className={({ isActive }) => `bottom-nav-item${isActive ? ' active' : ''}`}
-                        >
-                            <span className="material-symbols-outlined">{item.icon}</span>
-                            <span>{item.label}</span>
-                        </NavLink>
-                    ))}
-                </div>
-            </div>
         </>
     );
 }
