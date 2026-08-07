@@ -9,6 +9,7 @@ export const navItems = [
     { to: '/inventory', icon: 'inventory_2', label: 'Inventory' },
     { to: '/products', icon: 'egg', label: 'Products' },
     { to: '/sales', icon: 'payments', label: 'Sales' },
+    { to: '/orders', icon: 'list_alt', label: 'Pemesanan' },
     { to: '/finance', icon: 'account_balance', label: 'Finance' },
 ];
 

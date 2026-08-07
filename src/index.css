@@ -1310,11 +1310,19 @@ table {
   flex-shrink: 0;
 }
 
+.sales-cart-footer {
+  padding: var(--space-md);
+  border-top: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-lowest);
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.05);
+}
+
 @media (max-width: 768px) {
   .sales-container {
     flex-direction: column;
     height: auto;
     overflow: visible;
+    margin-bottom: -70px;
   }
 
   .sales-left {
@@ -1326,6 +1334,12 @@ table {
     width: 100%;
     border-top: 1px solid var(--color-outline-variant);
     overflow: visible;
+  }
+
+  .sales-cart-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
   }
 }
 
@@ -1943,8 +1957,14 @@ table {
 /* Bottom grid */
 .analytics-bottom-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-lg);
+}
+
+@media (max-width: 1024px) {
+  .analytics-bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 /* Empty state */

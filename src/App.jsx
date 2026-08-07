@@ -9,6 +9,7 @@ import Sales from './pages/Sales';
 import Finance from './pages/Finance';
 import Inventory from './pages/Inventory';
 import Analytics from './pages/Analytics';
+import Orders from './pages/Orders';
 import { useState, useEffect, useRef } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
@@ -109,6 +110,7 @@ export default function App() {
           <Route path="/inventory" element={<ProtectedLayout><Inventory /></ProtectedLayout>} />
           <Route path="/products" element={<ProtectedLayout><Products /></ProtectedLayout>} />
           <Route path="/sales" element={<ProtectedLayout><Sales /></ProtectedLayout>} />
+          <Route path="/orders" element={<ProtectedLayout><Orders /></ProtectedLayout>} />
           <Route path="/finance" element={<ProtectedLayout><Finance /></ProtectedLayout>} />
           <Route path="/analytics" element={<ProtectedLayout><Analytics /></ProtectedLayout>} />
           <Route path="*" element={<Navigate to="/" replace />} />

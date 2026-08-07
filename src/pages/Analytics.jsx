@@ -11,6 +11,13 @@ const fmtRp = (n) => {
     return 'Rp ' + n.toFixed(0);
 };
 
+const fmtRpExact = (n) => {
+    n = n || 0;
+    if (n >= 1e9) return 'Rp ' + (n / 1e9).toFixed(1) + 'M';
+    if (n >= 1e6) return 'Rp ' + (n / 1e6).toFixed(1) + 'jt';
+    return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+};
+
 const DAYS_SHORT = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 const getDateRange = (range, sales = []) => {
@@ -392,6 +399,39 @@ function WeekdayChart({ data }) {
     );
 }
 
+// ─── Vertical Bar (Daily Profit) ───────────────────────────────────────────────
+function DailyProfitChart({ data }) {
+    const maxVal = Math.max(...data.map(d => d.value), 1);
+    return (
+        <div className="analytics-weekday-chart">
+            {data.map((d, i) => {
+                const pct = Math.max((d.value / maxVal) * 100, d.value > 0 ? 4 : 0);
+                return (
+                    <div key={i} className="analytics-weekday-bar-group">
+                        <span className="analytics-weekday-bar-value" style={{ color: 'var(--color-tertiary)', fontWeight: 600, fontSize: 8 }}>
+                            {d.value > 0 ? fmtRpExact(d.value) : ''}
+                        </span>
+                        <div
+                            className="analytics-weekday-bar"
+                            style={{
+                                height: `${pct}%`,
+                                background: 'linear-gradient(to top, rgba(0, 108, 73, 0.12), rgba(0, 108, 73, 0.65))',
+                                border: '1px solid rgba(0, 108, 73, 0.25)',
+                                borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0'
+                            }}
+                            title={`${d.label} (${d.dateStr}): ${fmtRpExact(d.value)}`}
+                        />
+                        <span className="analytics-weekday-bar-label" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.2 }}>
+                            <span>{d.label}</span>
+                            <span style={{ fontSize: 9, opacity: 0.6 }}>{d.dateStr}</span>
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 function Skeleton({ style }) {
     return <div className="analytics-skeleton" style={style} />;
@@ -501,6 +541,43 @@ export default function Analytics() {
         });
         return arr;
     }, [filteredSales]);
+
+    // Daily Profit for the last 7 days
+    const dailyProfitData = useMemo(() => {
+        const result = [];
+        const now = new Date();
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 0, 0, 0, 0);
+            const dEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 23, 59, 59, 999);
+
+            // Filter sales on this specific day
+            const daySales = sales.filter(s => {
+                const sDate = s.date?.toDate?.();
+                return sDate && sDate >= d && sDate <= dEnd;
+            });
+
+            // Calculate gross profit: total sale revenue - buying cost
+            let profit = 0;
+            daySales.forEach(sale => {
+                let saleProfit = 0;
+                sale.items?.forEach(item => {
+                    const prod = products.find(p => p.id === item.id);
+                    const buyPrice = item.buyPrice !== undefined ? item.buyPrice : (prod?.buyPrice || 0);
+                    const sellPrice = item.price || 0;
+                    saleProfit += item.qty * (sellPrice - buyPrice);
+                });
+                profit += saleProfit;
+            });
+
+            result.push({
+                date: d,
+                label: d.toLocaleDateString('id-ID', { weekday: 'short' }),
+                dateStr: `${d.getDate()}/${d.getMonth() + 1}`,
+                value: profit
+            });
+        }
+        return result;
+    }, [sales, products]);
 
     // Product list for filter
     const productOptions = useMemo(() => {
@@ -686,6 +763,26 @@ export default function Analytics() {
                             </div>
                         ) : (
                             <WeekdayChart data={weekdayData} />
+                        )}
+                    </div>
+                </div>
+
+                {/* Daily Profit (Last 7 Days) */}
+                <div className="card">
+                    <div className="card-header">
+                        <span className="card-title">Keuntungan 7 Hari Terakhir</span>
+                        <span style={{ fontSize: 12, color: 'var(--color-on-surface-variant)' }}>Gross Profit</span>
+                    </div>
+                    <div className="card-body" style={{ padding: 'var(--space-md) var(--space-lg) var(--space-lg)' }}>
+                        {loading ? (
+                            <Skeleton style={{ height: 180, borderRadius: 8 }} />
+                        ) : dailyProfitData.length === 0 ? (
+                            <div className="analytics-empty-state">
+                                <span className="material-symbols-outlined">trending_flat</span>
+                                <p>Belum ada data keuntungan.</p>
+                            </div>
+                        ) : (
+                            <DailyProfitChart data={dailyProfitData} />
                         )}
                     </div>
                 </div>

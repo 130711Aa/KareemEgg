@@ -160,12 +160,13 @@ export default function Sales() {
                         <span className="material-symbols-outlined text-muted" style={{ fontSize: 16 }}>person</span>
                         <span className="form-label">Pelanggan</span>
                     </div>
-                    <select className="form-input form-select w-full" value={customer} onChange={e => setCustomer(e.target.value)}>
-                        <option>Walk-in Customer</option>
-                        <option>Fresh Foods Market (B2B)</option>
-                        <option>Sunrise Bakery</option>
-                        <option>Toko Roti Sejahtera</option>
-                    </select>
+                    <input
+                        type="text"
+                        className="form-input w-full"
+                        value={customer}
+                        onChange={e => setCustomer(e.target.value)}
+                        placeholder="Nama pelanggan..."
+                    />
                 </div>
 
                 {/* Cart Items */}
@@ -205,7 +206,7 @@ export default function Sales() {
                 </div>
 
                 {/* Totals and Payment */}
-                <div style={{ padding: 'var(--space-md)', borderTop: '1px solid var(--color-outline-variant)', background: 'var(--color-surface-container-lowest)', boxShadow: '0 -4px 8px rgba(0,0,0,0.05)' }}>
+                <div className="sales-cart-footer">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 'var(--space-md)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-body-sm)', color: 'var(--color-on-surface-variant)' }}>
                             <span>Subtotal</span><span className="text-mono">{fmtRp(subtotal)}</span>
