@@ -54,18 +54,19 @@ export default function Sales() {
         if (cart.length === 0) { showToast('Keranjang kosong!', 'error'); return; }
         setProcessing(true);
         try {
-            await addDoc(collection(db, 'sales'), {
+            // 1. Create the sale doc and capture its ID
+            const saleRef = await addDoc(collection(db, 'sales'), {
                 items: cart.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.sellPrice, buyPrice: i.buyPrice || 0, total: i.qty * i.sellPrice })),
                 subtotal, tax, total,
                 paymentMethod: payMethod,
                 customer,
                 date: serverTimestamp(),
             });
-            // Update product stock
+            // 2. Update product stock
             await Promise.all(cart.map(i =>
                 updateDoc(doc(db, 'products', i.id), { stock: increment(-i.qty) })
             ));
-            // Add to finance transactions
+            // 3. Add linked finance transaction — store saleId for cascade delete
             await addDoc(collection(db, 'transactions'), {
                 type: 'income',
                 amount: total,
@@ -74,6 +75,7 @@ export default function Sales() {
                 account: payMethod,
                 date: serverTimestamp(),
                 status: 'Completed',
+                saleId: saleRef.id,
             });
             setCart([]);
             setSuccessModal(true);

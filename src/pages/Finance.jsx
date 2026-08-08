@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, setDoc, query, orderBy, limit, increment, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, getDoc, updateDoc, deleteDoc, setDoc, query, where, orderBy, limit, getDocs, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useToast } from '../components/Toast';
 
@@ -160,14 +160,95 @@ export default function Finance() {
         }
     };
 
-    const handleDeleteTransaction = async (id) => {
-        if (window.confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
-            try {
-                await deleteDoc(doc(db, 'transactions', id));
+    const handleDeleteTransaction = async (txn) => {
+        const confirmMsg = txn.saleId
+            ? 'Hapus transaksi ini? Karena ini terhubung ke penjualan POS, data penjualan & stok juga akan dikembalikan.'
+            : 'Apakah Anda yakin ingin menghapus transaksi ini?';
+        if (!window.confirm(confirmMsg)) return;
+        try {
+            // Delete the transaction itself
+            await deleteDoc(doc(db, 'transactions', txn.id));
+
+            // If this transaction is linked to a sale, cascade delete it and restore stock
+            if (txn.saleId) {
+                const saleDocRef = doc(db, 'sales', txn.saleId);
+                const saleDoc = await getDoc(saleDocRef);
+                if (saleDoc.exists()) {
+                    const saleData = saleDoc.data();
+                    // Restore product stock
+                    if (saleData.items && saleData.items.length > 0) {
+                        await Promise.all(saleData.items.map(item =>
+                            updateDoc(doc(db, 'products', item.id), {
+                                stock: increment(item.qty)
+                            })
+                        ));
+                    }
+                    // Delete the sale document
+                    await deleteDoc(saleDocRef);
+                }
+                showToast('Transaksi & penjualan terkait berhasil dihapus, stok dikembalikan!');
+            } else {
                 showToast('Transaksi berhasil dihapus!');
-            } catch (e) {
-                showToast('Gagal menghapus transaksi.', 'error');
             }
+        } catch (e) {
+            console.error(e);
+            showToast('Gagal menghapus transaksi.', 'error');
+        }
+    };
+
+    const handleDeleteSale = async (sale) => {
+        if (!window.confirm('Hapus penjualan ini? Stok produk akan dikembalikan dan transaksi keuangan terkait juga akan dihapus.')) return;
+        try {
+            // 1. Delete from sales collection
+            await deleteDoc(doc(db, 'sales', sale.id));
+
+            // 2. Restore product stock for each item
+            if (sale.items && sale.items.length > 0) {
+                await Promise.all(sale.items.map(item =>
+                    updateDoc(doc(db, 'products', item.id), {
+                        stock: increment(item.qty)
+                    })
+                ));
+            }
+
+            // 3. Find and delete the linked Sales Revenue transaction
+            // First try by precise saleId (new sales), then fallback to heuristic (old data)
+            const byIdSnap = await getDocs(query(
+                collection(db, 'transactions'),
+                where('saleId', '==', sale.id)
+            ));
+            if (!byIdSnap.empty) {
+                await Promise.all(byIdSnap.docs.map(txnDoc => deleteDoc(doc(db, 'transactions', txnDoc.id))));
+            } else {
+                // Fallback for historical sales without saleId: match by amount + customer name
+                const fallbackSnap = await getDocs(query(
+                    collection(db, 'transactions'),
+                    where('type', '==', 'income'),
+                    where('category', '==', 'Sales Revenue'),
+                    where('amount', '==', sale.total)
+                ));
+                const deletePromises = [];
+                fallbackSnap.forEach(txnDoc => {
+                    const desc = txnDoc.data().description || '';
+                    if (sale.customer && desc.includes(sale.customer)) {
+                        deletePromises.push(deleteDoc(doc(db, 'transactions', txnDoc.id)));
+                    }
+                });
+                // If still nothing matched by customer, delete first match
+                if (deletePromises.length === 0) {
+                    fallbackSnap.forEach(txnDoc => {
+                        if (deletePromises.length === 0)
+                            deletePromises.push(deleteDoc(doc(db, 'transactions', txnDoc.id)));
+                    });
+                }
+                await Promise.all(deletePromises);
+            }
+
+            if (selectedSale?.id === sale.id) setSelectedSale(null);
+            showToast('Penjualan berhasil dihapus & stok dikembalikan!');
+        } catch (e) {
+            console.error(e);
+            showToast('Gagal menghapus penjualan. Coba lagi.', 'error');
         }
     };
 
@@ -466,7 +547,7 @@ export default function Finance() {
                                                 )}
                                                 <button
                                                     className="btn btn-icon"
-                                                    onClick={() => handleDeleteTransaction(t.id)}
+                                                    onClick={() => handleDeleteTransaction(t)}
                                                     title="Hapus Transaksi"
                                                     style={{ color: 'var(--color-error)' }}
                                                 >
@@ -514,9 +595,19 @@ export default function Finance() {
                                                     {fmtRp(s.total)}
                                                 </td>
                                                 <td style={{ textAlign: 'center' }}>
-                                                    <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)' }} onClick={() => setSelectedSale(s)}>
-                                                        Detail
-                                                    </button>
+                                                    <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+                                                        <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)' }} onClick={() => setSelectedSale(s)}>
+                                                            Detail
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-icon"
+                                                            style={{ color: 'var(--color-error)' }}
+                                                            onClick={() => handleDeleteSale(s)}
+                                                            title="Hapus Penjualan (kembalikan stok)"
+                                                        >
+                                                            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );

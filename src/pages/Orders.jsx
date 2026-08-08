@@ -156,8 +156,8 @@ export default function Orders() {
         }
 
         try {
-            // 1. Process POS Sale
-            await addDoc(collection(db, 'sales'), {
+            // 1. Process POS Sale — capture saleRef for linking
+            const saleRef = await addDoc(collection(db, 'sales'), {
                 items: order.items,
                 subtotal: order.totalAmount,
                 tax: 0,
@@ -174,7 +174,7 @@ export default function Orders() {
                 })
             ));
 
-            // 3. Record Finance transaction
+            // 3. Record Finance transaction — store saleId for cascade delete
             await addDoc(collection(db, 'transactions'), {
                 type: 'income',
                 amount: order.totalAmount,
@@ -182,7 +182,8 @@ export default function Orders() {
                 description: `Pemesanan Lunas ke ${order.customerName}`,
                 account: order.paymentMethod === 'qris' || order.paymentMethod === 'transfer' ? 'Bank Transfer (Jago)' : 'Petty Cash',
                 date: serverTimestamp(),
-                status: 'Completed'
+                status: 'Completed',
+                saleId: saleRef.id,
             });
 
             // 4. Update status order to Delivered
