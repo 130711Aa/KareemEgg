@@ -106,7 +106,7 @@ export default function Finance() {
     const maxExpense = Math.max(...Object.values(expenseByCategory), 1);
 
     const fmtRp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
-    const fmtShort = (n) => { n = n || 0; if (n >= 1e9) return 'Rp ' + (n / 1e9).toFixed(1) + 'M'; if (n >= 1e6) return 'Rp ' + (n / 1e6).toFixed(1) + 'jt'; return 'Rp ' + (n / 1e3).toFixed(0) + 'rb'; };
+    const fmtShort = (n) => { n = n || 0; if (n >= 1e9) return 'Rp ' + parseFloat((n / 1e9).toFixed(1)) + 'M'; if (n >= 1e6) return 'Rp ' + parseFloat((n / 1e6).toFixed(1)) + 'jt'; return 'Rp ' + parseFloat((n / 1e3).toFixed(1)) + 'rb'; };
     const fmtDate = (ts) => { if (!ts?.toDate) return '—'; const d = ts.toDate(); return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); };
 
     const handleSave = async () => {

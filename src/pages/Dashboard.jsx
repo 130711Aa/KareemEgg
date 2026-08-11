@@ -49,7 +49,7 @@ export default function Dashboard() {
     });
     const maxBar = Math.max(...weeklyData, 1);
 
-    const fmtRp = (n) => 'Rp ' + (n >= 1e6 ? (n / 1e6).toFixed(1) + 'jt' : n >= 1e3 ? (n / 1e3).toFixed(0) + 'rb' : n.toFixed(0));
+    const fmtRp = (n) => 'Rp ' + (n >= 1e6 ? parseFloat((n / 1e6).toFixed(1)) + 'jt' : n >= 1e3 ? parseFloat((n / 1e3).toFixed(1)) + 'rb' : n.toFixed(0));
 
     return (
         <main className="page-canvas">
