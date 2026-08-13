@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useToast } from '../components/Toast';
+import QRISModal from '../components/QRISModal';
 
 const CATEGORIES = ['Semua', 'Premium', 'Free Range', 'Specialty', 'Standard', 'Bulk'];
 const PAYMENT_METHODS = [
@@ -18,6 +19,7 @@ export default function Sales() {
     const [payMethod, setPayMethod] = useState('cash');
     const [processing, setProcessing] = useState(false);
     const [successModal, setSuccessModal] = useState(false);
+    const [qrisModal, setQrisModal] = useState(false);
     const { showToast } = useToast();
 
     useEffect(() => {
@@ -50,6 +52,15 @@ export default function Sales() {
 
     const fmtRp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 
+    const handleCheckout = () => {
+        if (cart.length === 0) { showToast('Keranjang kosong!', 'error'); return; }
+        if (payMethod === 'qris') {
+            setQrisModal(true);
+            return;
+        }
+        processTransaction();
+    };
+
     const processTransaction = async () => {
         if (cart.length === 0) { showToast('Keranjang kosong!', 'error'); return; }
         setProcessing(true);
@@ -77,6 +88,7 @@ export default function Sales() {
                 status: 'Completed',
                 saleId: saleRef.id,
             });
+            setQrisModal(false);
             setCart([]);
             setSuccessModal(true);
         } catch (e) {
@@ -232,7 +244,7 @@ export default function Sales() {
                     </div>
                     <button
                         style={{ width: '100%', background: 'var(--color-primary)', color: 'var(--color-on-primary)', fontSize: 'var(--fs-headline-sm)', fontWeight: 600, padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', cursor: processing || cart.length === 0 ? 'not-allowed' : 'pointer', opacity: processing || cart.length === 0 ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'opacity 0.2s' }}
-                        onClick={processTransaction}
+                        onClick={handleCheckout}
                         disabled={processing || cart.length === 0}
                     >
                         <span className="material-symbols-outlined">point_of_sale</span>
@@ -240,6 +252,16 @@ export default function Sales() {
                     </button>
                 </div>
             </div>
+
+            {/* QRIS Modal */}
+            {qrisModal && (
+                <QRISModal
+                    amount={total}
+                    onConfirm={processTransaction}
+                    onCancel={() => setQrisModal(false)}
+                    confirmLabel="Konfirmasi Sudah Bayar & Catat Transaksi"
+                />
+            )}
 
             {/* Success Modal */}
             {successModal && (

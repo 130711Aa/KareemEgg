@@ -1,0 +1,7 @@
+/**
+ * QRIS statis milik penjual (KareeemEgg).
+ * Dipakai sebagai base untuk generate dynamic QRIS dengan nominal spesifik.
+ * Untuk mengganti, update string di bawah ini.
+ */
+export const STATIC_QRIS =
+    '00020101021126610014COM.GO-JEK.WWW01189360091438645659600210G8645659600303UMI51440014ID.CO.QRIS.WWW0215ID10265054979520303UMI5204549953033605802ID5910KareeemEgg6010YOGYAKARTA61055516162070703A01630410D8';

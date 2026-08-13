@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useToast } from '../components/Toast';
+import QRISModal from '../components/QRISModal';
 
 const fmtRp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 
@@ -35,8 +36,13 @@ export default function Orders() {
     const [modal, setModal] = useState(false);
     const [customerName, setCustomerName] = useState('');
     const [deliveryDate, setDeliveryDate] = useState(getTomorrowDateString());
-    const [payMethod, setPayMethod] = useState('cash');
     const [orderCart, setOrderCart] = useState([]);
+
+    // Fulfill / Konfirmasi Modal state
+    const [fulfillModal, setFulfillModal] = useState(null); // order object or null
+    const [fulfillPayMethod, setFulfillPayMethod] = useState('cash');
+    const [fulfilling, setFulfilling] = useState(false);
+    const [qrisModal, setQrisModal] = useState(false);
 
     // Add item form state in Modal
     const [selectedProductId, setSelectedProductId] = useState('');
@@ -121,16 +127,15 @@ export default function Orders() {
                 deliveryDate,
                 items: orderCart,
                 totalAmount: cartTotal,
-                paymentMethod: payMethod,
+                // paymentMethod sengaja kosong — baru diisi saat konfirmasi pengiriman
                 status: 'Pending',
                 createdAt: serverTimestamp()
             });
 
-            showToast('Pesanan berhasil disimpan!');
+            showToast('Pesanan berhasil dicatat!');
             setModal(false);
             setCustomerName('');
             setDeliveryDate(getTomorrowDateString());
-            setPayMethod('cash');
             setOrderCart([]);
         } catch (e) {
             showToast('Gagal menyimpan pesanan.', 'error');
@@ -138,8 +143,32 @@ export default function Orders() {
         setSaving(false);
     };
 
-    const handleFulfillOrder = async (order) => {
-        // Find if stock is sufficient
+    // Buka dialog konfirmasi pengiriman
+    const openFulfillModal = (order) => {
+        setFulfillModal(order);
+        setFulfillPayMethod('cash');
+    };
+
+    const closeFulfillModal = () => {
+        setFulfillModal(null);
+        setFulfillPayMethod('cash');
+        setQrisModal(false);
+    };
+
+    // Saat klik "Konfirmasi & Lunas" — cek apakah QRIS
+    const handleFulfillClick = () => {
+        if (fulfillPayMethod === 'qris') {
+            setQrisModal(true);
+            return;
+        }
+        handleConfirmFulfill();
+    };
+
+    const handleConfirmFulfill = async () => {
+        const order = fulfillModal;
+        if (!order) return;
+
+        // Cek stok dulu
         let stockSufficient = true;
         const insufficientProduct = [];
         order.items.forEach(item => {
@@ -155,14 +184,15 @@ export default function Orders() {
             return;
         }
 
+        setFulfilling(true);
         try {
-            // 1. Process POS Sale — capture saleRef for linking
+            // 1. Process POS Sale
             const saleRef = await addDoc(collection(db, 'sales'), {
                 items: order.items,
                 subtotal: order.totalAmount,
                 tax: 0,
                 total: order.totalAmount,
-                paymentMethod: order.paymentMethod || 'cash',
+                paymentMethod: fulfillPayMethod,
                 customer: order.customerName,
                 date: serverTimestamp()
             });
@@ -174,28 +204,31 @@ export default function Orders() {
                 })
             ));
 
-            // 3. Record Finance transaction — store saleId for cascade delete
+            // 3. Record Finance transaction
             await addDoc(collection(db, 'transactions'), {
                 type: 'income',
                 amount: order.totalAmount,
                 category: 'Sales Revenue',
                 description: `Pemesanan Lunas ke ${order.customerName}`,
-                account: order.paymentMethod === 'qris' || order.paymentMethod === 'transfer' ? 'Bank Transfer (Jago)' : 'Petty Cash',
+                account: fulfillPayMethod === 'qris' || fulfillPayMethod === 'transfer' ? 'Bank Transfer (Jago)' : 'Petty Cash',
                 date: serverTimestamp(),
                 status: 'Completed',
                 saleId: saleRef.id,
             });
 
-            // 4. Update status order to Delivered
+            // 4. Update order status + simpan metode bayar yang dipilih
             await updateDoc(doc(db, 'orders', order.id), {
                 status: 'Delivered',
+                paymentMethod: fulfillPayMethod,
                 deliveredAt: serverTimestamp()
             });
 
             showToast(`Pesanan ${order.customerName} berhasil diselesaikan & lunas!`);
+            closeFulfillModal();
         } catch (e) {
             showToast('Gagal memproses penyelesaian pesanan.', 'error');
         }
+        setFulfilling(false);
     };
 
     const handleCancelOrder = async (orderId) => {
@@ -225,6 +258,12 @@ export default function Orders() {
             return <span className="badge badge-warning" style={{ marginLeft: 8 }}>Besok</span>;
         }
         return null;
+    };
+
+    const payMethodLabel = (method) => {
+        if (!method) return '—';
+        const map = { cash: 'Cash', qris: 'QRIS', transfer: 'Transfer' };
+        return map[method] || method;
     };
 
     return (
@@ -286,8 +325,8 @@ export default function Orders() {
                                 <th>Pelanggan</th>
                                 <th>Tanggal Pengantaran</th>
                                 <th>Daftar Pembelian</th>
-                                <th style={{ textAlign: 'right' }}>Total Bayar</th>
-                                <th style={{ textAlign: 'center' }}>Metode</th>
+                                <th style={{ textAlign: 'right' }}>Total</th>
+                                <th style={{ textAlign: 'center' }}>Metode Bayar</th>
                                 {activeTab === 'Pending' && <th style={{ textAlign: 'center' }}>Aksi</th>}
                             </tr>
                         </thead>
@@ -321,9 +360,13 @@ export default function Orders() {
                                                 {fmtRp(order.totalAmount)}
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
-                                                <span className="badge badge-neutral" style={{ textTransform: 'uppercase' }}>
-                                                    {order.paymentMethod}
-                                                </span>
+                                                {order.paymentMethod ? (
+                                                    <span className="badge badge-neutral" style={{ textTransform: 'uppercase' }}>
+                                                        {payMethodLabel(order.paymentMethod)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted" style={{ fontSize: 12 }}>Belum ditentukan</span>
+                                                )}
                                             </td>
                                             {activeTab === 'Pending' && (
                                                 <td style={{ textAlign: 'center' }}>
@@ -331,7 +374,7 @@ export default function Orders() {
                                                         <button
                                                             className="btn btn-secondary"
                                                             style={{ padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-tertiary-container)30', color: 'var(--color-tertiary)', border: 'none' }}
-                                                            onClick={() => handleFulfillOrder(order)}
+                                                            onClick={() => openFulfillModal(order)}
                                                         >
                                                             <span className="material-symbols-outlined" style={{ fontSize: 14 }}>local_shipping</span>
                                                             Kirim & Lunas
@@ -356,7 +399,7 @@ export default function Orders() {
                 </div>
             </div>
 
-            {/* Add Order Modal */}
+            {/* ===== Add Order Modal ===== */}
             {modal && (
                 <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
                     <div className="modal" style={{ maxWidth: 500 }}>
@@ -386,18 +429,8 @@ export default function Orders() {
                                     onChange={e => setDeliveryDate(e.target.value)}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Metode Pembayaran</label>
-                                <select
-                                    className="form-input form-select w-full"
-                                    value={payMethod}
-                                    onChange={e => setPayMethod(e.target.value)}
-                                >
-                                    <option value="cash">Cash (Tunai)</option>
-                                    <option value="qris">QRIS</option>
-                                    <option value="transfer">Bank Transfer</option>
-                                </select>
-                            </div>
+
+                            {/* Metode bayar sengaja TIDAK ada di sini — pilih saat konfirmasi pengiriman */}
 
                             {/* Item Builder */}
                             <div style={{ background: 'var(--color-surface-container-low)', padding: 'var(--space-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-outline-variant)' }}>
@@ -468,6 +501,101 @@ export default function Orders() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* ===== Konfirmasi Pengiriman & Pelunasan Modal ===== */}
+            {fulfillModal && (
+                <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeFulfillModal()}>
+                    <div className="modal" style={{ maxWidth: 420 }}>
+                        <div className="modal-header">
+                            <span className="modal-title">Konfirmasi Pengiriman</span>
+                            <button className="btn btn-icon" onClick={closeFulfillModal}>
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            {/* Ringkasan pesanan */}
+                            <div style={{ background: 'var(--color-surface-container-low)', padding: 'var(--space-md)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-outline-variant)' }}>
+                                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>{fulfillModal.customerName}</div>
+                                <div style={{ fontSize: 12, color: 'var(--color-on-surface-variant)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    {fulfillModal.items?.map(item => (
+                                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>{item.name} × {item.qty} pcs</span>
+                                            <span className="text-mono" style={{ fontWeight: 600 }}>{fmtRp(item.total)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div style={{ borderTop: '1px dashed var(--color-outline-variant)', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14 }}>
+                                    <span>Total Tagihan</span>
+                                    <span className="text-mono text-success">{fmtRp(fulfillModal.totalAmount)}</span>
+                                </div>
+                            </div>
+
+                            {/* Pilih metode bayar baru di sini */}
+                            <div className="form-group">
+                                <label className="form-label">
+                                    <span className="material-symbols-outlined" style={{ fontSize: 16, verticalAlign: 'middle', marginRight: 4 }}>payments</span>
+                                    Metode Pembayaran
+                                </label>
+                                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                                    {[['cash', 'Cash', 'payments'], ['qris', 'QRIS', 'qr_code_2'], ['transfer', 'Transfer', 'account_balance']].map(([val, label, icon]) => (
+                                        <button
+                                            key={val}
+                                            type="button"
+                                            onClick={() => setFulfillPayMethod(val)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '10px 6px',
+                                                borderRadius: 'var(--radius-md)',
+                                                border: `2px solid ${fulfillPayMethod === val ? 'var(--color-primary)' : 'var(--color-outline-variant)'}`,
+                                                background: fulfillPayMethod === val ? 'var(--color-primary-container)' : 'transparent',
+                                                color: fulfillPayMethod === val ? 'var(--color-on-primary-container)' : 'var(--color-on-surface-variant)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: 4,
+                                                fontSize: 12,
+                                                fontWeight: fulfillPayMethod === val ? 700 : 400,
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: 22 }}>{icon}</span>
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ fontSize: 12, color: 'var(--color-on-surface-variant)', padding: '8px 12px', background: 'var(--color-surface-container-low)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-outline-variant)' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 4 }}>info</span>
+                                Aksi ini akan mengurangi stok, mencatat penjualan, dan mencatat pemasukan keuangan secara otomatis.
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={closeFulfillModal} disabled={fulfilling}>Batal</button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleFulfillClick}
+                                disabled={fulfilling}
+                                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{fulfillPayMethod === 'qris' ? 'qr_code_2' : 'local_shipping'}</span>
+                                {fulfilling ? 'Memproses...' : (fulfillPayMethod === 'qris' ? 'Tampilkan QR & Lunas' : 'Konfirmasi & Lunas')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* QRIS Modal — muncul saat metode bayar QRIS dipilih di fulfill */}
+            {qrisModal && fulfillModal && (
+                <QRISModal
+                    amount={fulfillModal.totalAmount}
+                    onConfirm={handleConfirmFulfill}
+                    onCancel={() => setQrisModal(false)}
+                    confirmLabel="Konfirmasi Sudah Bayar & Selesaikan Pesanan"
+                />
             )}
         </main>
     );
