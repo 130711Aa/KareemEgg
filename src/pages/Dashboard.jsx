@@ -49,7 +49,7 @@ export default function Dashboard() {
     });
     const maxBar = Math.max(...weeklyData, 1);
 
-    const fmtRp = (n) => 'Rp ' + (n >= 1e6 ? parseFloat((n / 1e6).toFixed(1)) + 'jt' : n >= 1e3 ? parseFloat((n / 1e3).toFixed(1)) + 'rb' : n.toFixed(0));
+    const fmtRp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 
     return (
         <main className="page-canvas">
@@ -100,7 +100,7 @@ export default function Dashboard() {
                         <span className="kpi-card-label">Total Stok (Butir)</span>
                         <div className="kpi-card-icon"><span className="material-symbols-outlined">egg</span></div>
                     </div>
-                    <div className="kpi-card-value">{totalStock >= 1000 ? (totalStock / 1000).toFixed(1) + 'K' : totalStock}</div>
+                    <div className="kpi-card-value">{totalStock.toLocaleString('id-ID')}</div>
                     <div className={`kpi-card-trend ${lowStock.length > 0 ? 'down' : 'up'}`}>
                         <span className="material-symbols-outlined" style={{ fontSize: 14 }}>{lowStock.length > 0 ? 'warning' : 'check_circle'}</span>
                         {lowStock.length > 0 ? `${lowStock.length} stok rendah` : 'Stok aman'}

@@ -4,18 +4,11 @@ import { db } from '../firebase';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtRp = (n) => {
-    n = n || 0;
-    if (n >= 1e9) return 'Rp ' + (n / 1e9).toFixed(1) + 'M';
-    if (n >= 1e6) return 'Rp ' + (n / 1e6).toFixed(1) + 'jt';
-    if (n >= 1e3) return 'Rp ' + (n / 1e3).toFixed(0) + 'rb';
-    return 'Rp ' + n.toFixed(0);
+    return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 };
 
 const fmtRpExact = (n) => {
-    n = n || 0;
-    if (n >= 1e9) return 'Rp ' + (n / 1e9).toFixed(1) + 'M';
-    if (n >= 1e6) return 'Rp ' + (n / 1e6).toFixed(1) + 'jt';
-    return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+    return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID');
 };
 
 const DAYS_SHORT = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
