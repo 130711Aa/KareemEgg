@@ -111,137 +111,189 @@ const getDateRange = (range) => {
 };
 
 function CashflowChart({ data, showNetOnly = false }) {
-  if (!data || data.length === 0)
-    return (
-      <div className="analytics-empty-chart" style={{ padding: "20px" }}>
-        Tidak ada data transaksi.
-      </div>
-    );
-  const minVal = Math.min(0, ...data.map((d) => d.net));
+  if (!data || data.length === 0) return <div className="analytics-empty-chart">Tidak ada data</div>;
+
   const maxVal = Math.max(
     1,
-    ...data.map((d) =>
-      Math.max(d.net, showNetOnly ? d.net : d.inflow, showNetOnly ? d.net : d.outflow)
-    )
+    ...data.flatMap((d) => [d.inflow || 0, d.outflow || 0, Math.abs(d.net || 0)])
   );
-  const range = maxVal - minVal;
-  const W = 800, H = 200;
+  const W = 800;
+  const H = 200;
 
-  const getY = (val) => H - ((val - minVal) / (range || 1)) * H;
-
-  const getLP = (key) => {
-    if (data.length === 1) return `M 0,${getY(data[0][key])}`;
-    return data
-      .map((d, i) => `${i === 0 ? "M" : "L"} ${(i / (data.length - 1)) * W},${getY(d[key])}`)
-      .join(" ");
+  // Smoothing generator
+  const getSmoothBezierPath = (pts) => {
+      if (pts.length === 0) return '';
+      if (pts.length === 1) return `M ${pts[0].x},${pts[0].y}`;
+      let path = `M ${pts[0].x},${pts[0].y}`;
+      const smoothing = 0.15;
+      for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[i];
+          const p1 = pts[i + 1];
+          const pMinus = pts[i - 1] || p0;
+          const pPlus = pts[i + 2] || p1;
+          const cp1x = p0.x + (p1.x - pMinus.x) * smoothing;
+          const cp1y = p0.y + (p1.y - pMinus.y) * smoothing;
+          const cp2x = p1.x - (pPlus.x - p0.x) * smoothing;
+          const cp2y = p1.y - (pPlus.y - p0.y) * smoothing;
+          path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p1.x},${p1.y}`;
+      }
+      return path;
   };
+
+  const getPoints = (key) => data.map((d, i) => {
+    const x = (i / (data.length - 1 || 1)) * W;
+    const y = H - (Math.max(0, key === 'net' ? d.net : d[key]) / maxVal) * H;
+    return { x, y, value: d[key] };
+  });
+
+  const ptsNet = getPoints('net');
+  const pathNet = getSmoothBezierPath(ptsNet);
+  const fillNet = ptsNet.length > 0 ? `${pathNet} L ${ptsNet[ptsNet.length - 1].x},${H} L ${ptsNet[0].x},${H} Z` : '';
+
+  const ptsInc = getPoints('inflow');
+  const pathInc = getSmoothBezierPath(ptsInc);
+
+  const ptsExp = getPoints('outflow');
+  const pathExp = getSmoothBezierPath(ptsExp);
+
   return (
-    <div style={{ position: "relative", marginTop: 12 }}>
-      <div
-        style={{
-          position: "relative",
-          height: H,
-          paddingLeft: 42,
-          paddingRight: 16,
-        }}
-      >
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="none"
-          style={{ width: "100%", height: "100%", overflow: "visible" }}
-        >
-          {minVal < 0 && (
-            <line x1="0" y1={getY(0)} x2={W} y2={getY(0)} stroke="var(--color-on-surface-variant)" opacity="0.3" strokeWidth="1" strokeDasharray="4,4" />
-          )}
-          {!showNetOnly && (
-            <path
-              d={getLP("inflow")}
-              fill="none"
-              stroke="#006c49"
-              strokeWidth="3"
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-          {!showNetOnly && (
-            <path
-              d={getLP("outflow")}
-              fill="none"
-              stroke="#ba1a1a"
-              strokeWidth="3"
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-          <path
-            d={getLP("net")}
-            fill="none"
-            stroke="#ffc107"
-            strokeWidth="2"
-            strokeDasharray="4,4"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-        {data.map((d, i) => (
-          <span
-            key={i}
-            style={{
-              position: "absolute",
-              left: `${(i / (data.length - 1 || 1)) * 100}%`,
-              bottom: -20,
-              transform: "translateX(-50%)",
-              fontSize: 10,
-              color: "var(--color-on-surface-variant)",
-              fontWeight: 600,
-            }}
+    <div className="analytics-line-chart-wrap" style={{ position: 'relative', marginTop: 12 }}>
+      <div className="analytics-chart-canvas" style={{ position: 'relative', paddingLeft: 42, paddingRight: 16 }}>
+        <div className="analytics-chart-draw-area" style={{ position: 'relative', height: H }}>
+          {/* Axis lines */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderBottom: '1px solid var(--color-outline-variant)', zIndex: 0 }} />
+
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio="none"
+            style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible', position: 'relative', zIndex: 1 }}
           >
-            {d.label}
-          </span>
-        ))}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 16,
-          marginTop: 32,
-          fontSize: 12,
-          fontWeight: 600,
-        }}
-      >
-        {!showNetOnly && (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  background: "#006c49",
-                  borderRadius: 2,
-                }}
-              ></div>{" "}
-              Masuk
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  background: "#ba1a1a",
-                  borderRadius: 2,
-                }}
-              ></div>{" "}
-              Keluar
-            </div>
-          </>
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <div
-            style={{
-              width: 12,
-              height: 12,
-              borderBottom: "2px dashed #ffc107",
-            }}
-          ></div>{" "}
-          Net
+            <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-primary-fixed-dim)" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="var(--color-primary-fixed-dim)" stopOpacity="0" />
+                </linearGradient>
+            </defs>
+            {/* Fill under Net line */}
+            {fillNet && <path d={fillNet} fill="url(#chartGrad)" />}
+
+            {/* Lines */}
+            {!showNetOnly && (
+              <>
+                <path d={pathInc} fill="none" stroke="var(--color-success)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                <path d={pathExp} fill="none" stroke="var(--color-error)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+              </>
+            )}
+            <path d={pathNet} fill="none" stroke="var(--color-primary-fixed-dim)" strokeWidth={showNetOnly ? "4" : "4"} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+          </svg>
+
+          {/* HTML Interactive Dots & Tooltips */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 2 }}>
+            {ptsNet.map((p, i) => {
+                const leftPct = (i / (ptsNet.length - 1 || 1)) * 100;
+                const dList = [
+                    showNetOnly ? null : { label: 'Masuk', val: ptsInc[i].value, col: 'var(--color-success)' },
+                    showNetOnly ? null : { label: 'Keluar', val: ptsExp[i].value, col: 'var(--color-error)' },
+                    { label: 'Net', val: p.value, col: 'var(--color-primary)' }
+                ].filter(Boolean);
+
+                return (
+                    <div
+                        key={i}
+                        className="analytics-chart-dot-container"
+                        style={{
+                            position: 'absolute',
+                            left: `${leftPct}%`,
+                            top: `${(p.y / H) * 100}%`,
+                            width: 0,
+                            height: 0,
+                            pointerEvents: 'auto'
+                        }}
+                    >
+                        <div
+                            className="analytics-chart-dot"
+                            style={{
+                                position: 'absolute',
+                                left: -6,
+                                top: -6,
+                                width: 12,
+                                height: 12,
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--color-surface-container-lowest)',
+                                border: '3px solid var(--color-primary-fixed-dim)',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                cursor: 'pointer',
+                                transition: 'transform 0.15s'
+                            }}
+                        />
+                        <div
+                            className="analytics-chart-tooltip"
+                            style={{
+                                position: 'absolute',
+                                bottom: 12,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                backgroundColor: 'var(--color-inverse-surface)',
+                                color: 'var(--color-inverse-on-surface)',
+                                padding: '6px 10px',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: 10,
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                opacity: 0,
+                                visibility: 'hidden',
+                                transition: 'opacity 0.15s, visibility 0.15s',
+                                zIndex: 10,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 2
+                            }}
+                        >
+                            <div style={{ opacity: 0.8, fontSize: 9, marginBottom: 2, borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: 2 }}>{data[i].label}</div>
+                            {dList.map((dl, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                                    <span style={{ color: dl.col }}>{dl.label}</span>
+                                    <span>{dl.val < 0 ? '-' : ''}{fmtRp(Math.abs(dl.val))}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })}
+          </div>
+        </div>
+
+        {/* X Labels Container */}
+        <div className="analytics-chart-xlabels" style={{ position: 'relative', height: 20, marginTop: 8 }}>
+            {data.map((d, i) => {
+                const leftPct = (i / (data.length - 1 || 1)) * 100;
+                // Compact label for mobile: '10 Agu' -> '10', 'Jan 2026' -> 'Jan'
+                const rawLabel = d.label || '';
+                const parts = rawLabel.split(' ');
+                const labelText = parts.length > 0 ? parts[0] : rawLabel;
+                
+                return (
+                    <span
+                        key={i}
+                        className="analytics-chart-xlabel"
+                        style={{
+                            position: 'absolute',
+                            left: `${leftPct}%`,
+                            transform: i === 0 ? "translateX(0)" : i === data.length - 1 ? "translateX(-100%)" : "translateX(-50%)",
+                            whiteSpace: 'nowrap',
+                            display: 'inline-block',
+                            textAlign: 'center',
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: 'var(--color-on-surface-variant)'
+                        }}
+                    >
+                        <span className="hide-sm-down">{d.label}</span>
+                        <span className="hide-md-up">{labelText}</span>
+                    </span>
+                );
+            })}
         </div>
       </div>
     </div>
@@ -1101,6 +1153,7 @@ export default function Finance() {
               style={{
                 padding: "0 var(--space-lg) var(--space-md)",
                 display: "flex",
+                flexWrap: "wrap",
                 gap: "var(--space-sm)",
               }}
             >
@@ -1121,7 +1174,7 @@ export default function Finance() {
                 ),
               )}
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto hide-sm-down">
               <table className="data-table" style={{ minWidth: 600 }}>
                 <thead>
                   <tr>
@@ -1206,6 +1259,55 @@ export default function Finance() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile List View */}
+            <div className="hide-md-up" style={{ padding: "0 var(--space-lg) var(--space-md)" }}>
+              {tTxn.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "var(--space-xl)", color: "var(--color-on-surface-variant)" }}>
+                  Hening...
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                  {tTxn.slice(0, 30).map((t) => {
+                    const isInc = t.type === "income" || t.type === "capital_in";
+                    const isTr = t.type === "transfer";
+                    return (
+                      <div key={t.id} style={{
+                        background: "var(--color-surface-container-lowest)",
+                        border: "1px solid var(--color-outline-variant)",
+                        borderRadius: "var(--radius-md)",
+                        padding: "var(--space-md)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <div style={{ flex: 1, paddingRight: 8 }}>
+                            <div style={{ fontWeight: 600, fontSize: "var(--fs-body-sm)" }}>{t.description}</div>
+                            <div style={{ fontSize: 11, color: "var(--color-on-surface-variant)", marginTop: 2 }}>{fmtDate(t.date)}</div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div className={`text-mono ${isTr ? "text-primary" : isInc ? "text-success" : "text-error"}`} style={{ fontWeight: 700, fontSize: "var(--fs-body-md)" }}>
+                              {isTr ? "" : isInc ? "+" : "-"}{fmtRp(t.amount)}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed var(--color-outline-variant)", paddingTop: 8 }}>
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", flex: 1 }}>
+                            <span className="badge badge-neutral" style={{ fontSize: 10, padding: "2px 6px" }}>{isTr ? "Transfer" : t.category}</span>
+                            <span className="text-muted" style={{ fontSize: 10, maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isTr ? `${t.fromAccount} → ${t.toAccount}` : t.account}</span>
+                          </div>
+                          <button className="btn btn-icon" onClick={() => handleDelete(t)} style={{ color: "var(--color-error)", width: 24, height: 24 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1652,7 +1754,7 @@ export default function Finance() {
           </div>
         </div>
       )}
-      <style>{`@media (max-width: 900px) { .resp-fin-grid { grid-template-columns: 1fr !important; } }`}</style>
+      <style>{`@media (max-width: 900px) { .resp-fin-grid { grid-template-columns: minmax(0, 1fr) !important; } }`}</style>
     </main>
   );
 }

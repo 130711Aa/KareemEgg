@@ -184,7 +184,7 @@ export default function Dashboard() {
             </div>
 
             <style>{`
-        @media (max-width: 900px) { .resp-grid-main { grid-template-columns: 1fr !important; } }
+        @media (max-width: 900px) { .resp-grid-main { grid-template-columns: minmax(0, 1fr) !important; } }
       `}</style>
         </main>
     );
