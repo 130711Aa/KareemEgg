@@ -1329,47 +1329,7 @@ export default function Finance() {
                 >
                   Tarik Profit / Dividen
                 </button>
-                {/* ── Nilai Stok Awal ── */}
-                <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: 12, marginTop: 4 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-on-surface-variant)", marginBottom: 6 }}>
-                    Nilai Stok Awal
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--color-on-surface-variant)", marginBottom: 8, lineHeight: 1.4 }}>
-                    Masukkan nilai stok yang sudah ada sebelum app ini digunakan. Ini menyeimbangkan kalkulasi Net Profit tanpa mengubah saldo bank/kas.
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input
-                      className="form-input"
-                      type="number"
-                      min={0}
-                      placeholder="0"
-                      defaultValue={initialBalances["__initialInventoryValue"] || ""}
-                      id="initInvInput"
-                      style={{ flex: 1, fontSize: 13 }}
-                    />
-                    <button
-                      className="btn btn-primary"
-                      style={{ fontSize: 12, padding: "6px 12px", whiteSpace: "nowrap" }}
-                      onClick={async () => {
-                        const val = Number(document.getElementById("initInvInput").value || 0);
-                        try {
-                          await setDoc(doc(db, "settings", "initial_balances"), {
-                            ...initialBalances,
-                            "__initialInventoryValue": val,
-                          });
-                          showToast("Nilai stok awal disimpan!");
-                        } catch {
-                          showToast("Gagal menyimpan.", "error");
-                        }
-                      }}
-                    >
-                      Simpan
-                    </button>
-                  </div>
-                  <div style={{ fontSize: 11, marginTop: 6, color: "var(--color-on-surface-variant)" }}>
-                    Saat ini: <strong>{fmtRp(initialBalances["__initialInventoryValue"] || 0)}</strong>
-                  </div>
-                </div>
+                {/* end buttons */}
               </div>
             </div>
           )}
