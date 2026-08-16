@@ -812,10 +812,12 @@ table {
 /* ===== CHROME TABS ===== */
 .chrome-tabs-container {
   display: flex;
+  position: relative;
   gap: 2px;
   border-bottom: 2px solid var(--color-outline-variant);
   margin-bottom: var(--space-xl);
   padding-left: var(--space-xs);
+  z-index: 10;
 }
 
 .chrome-tab {
@@ -832,7 +834,7 @@ table {
   position: relative;
   letter-spacing: var(--ls-label-md);
   margin-bottom: -2px;
-  /* Overlap border */
+  /* Pull down to overlap container border */
   z-index: 1;
 }
 
@@ -841,11 +843,26 @@ table {
 }
 
 .chrome-tab.active {
-  background: var(--color-surface-container-lowest);
+  background: var(--color-background);
   color: var(--color-primary);
-  border-bottom: 2px solid var(--color-surface-container-lowest);
+  border-bottom: 2px solid var(--color-background);
   z-index: 2;
   font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .chrome-tabs-container {
+    padding-left: 0;
+    margin-bottom: var(--space-lg);
+  }
+
+  .chrome-tab {
+    flex: 1;
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
 }
 
 /* ===== STATUS BADGES ===== */
