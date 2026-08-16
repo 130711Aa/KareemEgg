@@ -619,14 +619,9 @@ export default function Finance() {
         </div>
         <div className="page-header-actions">
           <select
-            className="form-input form-select"
+            className="filter-select"
             value={periodFilter}
             onChange={(e) => setPeriodFilter(e.target.value)}
-            style={{
-              padding: "6px 12px",
-              fontSize: 13,
-              borderRadius: "var(--radius-md)",
-            }}
           >
             {PERIODS.map((p) => (
               <option key={p.id} value={p.id}>
@@ -635,14 +630,9 @@ export default function Finance() {
             ))}
           </select>
           <select
-            className="form-input form-select"
+            className="filter-select"
             value={accountFilter}
             onChange={(e) => setAccountFilter(e.target.value)}
-            style={{
-              padding: "6px 12px",
-              fontSize: 13,
-              borderRadius: "var(--radius-md)",
-            }}
           >
             <option value="all">Semua Akun</option>
             {ACCOUNTS.map((a) => (
@@ -674,18 +664,16 @@ export default function Finance() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
+      <div className="chrome-tabs-container">
         <button
           onClick={() => setMainTab("cashflow")}
-          className={`btn ${mainTab === "cashflow" ? "btn-primary" : "btn-secondary"}`}
-          style={{ borderRadius: 20 }}
+          className={`chrome-tab ${mainTab === "cashflow" ? "active" : ""}`}
         >
           Arus Kas Opex
         </button>
         <button
           onClick={() => setMainTab("investment")}
-          className={`btn ${mainTab === "investment" ? "btn-primary" : "btn-secondary"}`}
-          style={{ borderRadius: 20 }}
+          className={`chrome-tab ${mainTab === "investment" ? "active" : ""}`}
         >
           Investasi & Performa
         </button>
