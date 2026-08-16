@@ -652,6 +652,16 @@ export default function Finance() {
             ))}
           </select>
           <button
+            className="btn btn-secondary"
+            onClick={() => {
+              setTempBalances({ ...initialBalances });
+              setInitBalanceModal(true);
+            }}
+            style={{ padding: "6px 16px", fontSize: 13 }}
+          >
+            Edit Saldo Awal
+          </button>
+          <button
             className="btn btn-primary"
             onClick={() => {
               setForm(emptyTxn);
@@ -1634,6 +1644,61 @@ export default function Finance() {
                 disabled={saving}
               >
                 {saving ? "Menyimpan..." : "Simpan Trx"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {initBalanceModal && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => e.target === e.currentTarget && setInitBalanceModal(false)}
+        >
+          <div className="modal">
+            <div className="modal-header">
+              <span className="modal-title">Edit Saldo Awal</span>
+              <button className="btn btn-icon" onClick={() => setInitBalanceModal(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: 12, color: "var(--color-on-surface-variant)", marginBottom: 16, lineHeight: 1.5 }}>
+                Saldo uang tunai/bank pada saat kamu pertama kali mulai menggunakan aplikasi ini. <strong>Tidak mempengaruhi stok atau net profit.</strong>
+              </p>
+              {["Petty Cash", "Bank Transfer (Jago)"].map((acct) => (
+                <div className="form-group" key={acct}>
+                  <label className="form-label">{acct} (Rp)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min={0}
+                    value={tempBalances[acct] ?? 0}
+                    onChange={(e) => setTempBalances({ ...tempBalances, [acct]: Number(e.target.value) })}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setInitBalanceModal(false)}>
+                Batal
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  try {
+                    await setDoc(doc(db, "settings", "initial_balances"), {
+                      ...initialBalances,
+                      "Petty Cash": tempBalances["Petty Cash"] ?? 0,
+                      "Bank Transfer (Jago)": tempBalances["Bank Transfer (Jago)"] ?? 0,
+                    });
+                    setInitBalanceModal(false);
+                    showToast("Saldo awal berhasil disimpan!");
+                  } catch {
+                    showToast("Gagal menyimpan.", "error");
+                  }
+                }}
+              >
+                Simpan
               </button>
             </div>
           </div>
