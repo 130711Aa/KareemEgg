@@ -259,6 +259,7 @@ export default function Finance() {
   const [initialBalances, setInitialBalances] = useState({
     "Petty Cash": 0,
     "Bank Transfer (Jago)": 0,
+    "__initialInventoryValue": 0,
   });
   const [initBalanceModal, setInitBalanceModal] = useState(false);
   const [tempBalances, setTempBalances] = useState({});
@@ -421,7 +422,8 @@ export default function Finance() {
     .reduce((s, t) => s + (t.amount || 0), 0);
 
   const initialCap = (initialBalances["Petty Cash"] || 0) + (initialBalances["Bank Transfer (Jago)"] || 0);
-  const currInv = initialCap + dbCapIn - dbCapOut;
+  const initialInvValue = initialBalances["__initialInventoryValue"] || 0;
+  const currInv = initialCap + initialInvValue + dbCapIn - dbCapOut;
   const allNetProfit = totalAssets - currInv;
   const roi = currInv > 0 ? (allNetProfit / currInv) * 100 : 0;
 
@@ -1298,14 +1300,13 @@ export default function Finance() {
               <div className="card-header">
                 <span className="card-title">Aksi Modal</span>
               </div>
-              <div style={{ padding: "var(--space-md)" }}>
+              <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: 12 }}>
                 <button
                   className="btn btn-secondary w-full"
                   onClick={() => {
                     setForm({ ...emptyTxn, type: "capital_in" });
                     setModal(true);
                   }}
-                  style={{ marginBottom: 12 }}
                 >
                   Suntik Modal Baru
                 </button>
@@ -1318,6 +1319,47 @@ export default function Finance() {
                 >
                   Tarik Profit / Dividen
                 </button>
+                {/* ── Nilai Stok Awal ── */}
+                <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: 12, marginTop: 4 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-on-surface-variant)", marginBottom: 6 }}>
+                    Nilai Stok Awal
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--color-on-surface-variant)", marginBottom: 8, lineHeight: 1.4 }}>
+                    Masukkan nilai stok yang sudah ada sebelum app ini digunakan. Ini menyeimbangkan kalkulasi Net Profit tanpa mengubah saldo bank/kas.
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input
+                      className="form-input"
+                      type="number"
+                      min={0}
+                      placeholder="0"
+                      defaultValue={initialBalances["__initialInventoryValue"] || ""}
+                      id="initInvInput"
+                      style={{ flex: 1, fontSize: 13 }}
+                    />
+                    <button
+                      className="btn btn-primary"
+                      style={{ fontSize: 12, padding: "6px 12px", whiteSpace: "nowrap" }}
+                      onClick={async () => {
+                        const val = Number(document.getElementById("initInvInput").value || 0);
+                        try {
+                          await setDoc(doc(db, "settings", "initial_balances"), {
+                            ...initialBalances,
+                            "__initialInventoryValue": val,
+                          });
+                          showToast("Nilai stok awal disimpan!");
+                        } catch {
+                          showToast("Gagal menyimpan.", "error");
+                        }
+                      }}
+                    >
+                      Simpan
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, marginTop: 6, color: "var(--color-on-surface-variant)" }}>
+                    Saat ini: <strong>{fmtRp(initialBalances["__initialInventoryValue"] || 0)}</strong>
+                  </div>
+                </div>
               </div>
             </div>
           )}
