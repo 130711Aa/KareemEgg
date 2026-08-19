@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   collection,
   onSnapshot,
@@ -475,9 +475,22 @@ export default function Finance() {
 
   const initialCap = (initialBalances["Petty Cash"] || 0) + (initialBalances["Bank Transfer (Jago)"] || 0);
   const initialInvValue = initialBalances["__initialInventoryValue"] || 0;
-  const currInv = initialCap + initialInvValue + dbCapIn - dbCapOut;
-  const allNetProfit = totalAssets - currInv;
-  const roi = currInv > 0 ? (allNetProfit / currInv) * 100 : 0;
+
+  // 1. Total Modal Disetor (Capital Contributed)
+  const totalCapInjected = initialCap + initialInvValue + dbCapIn;
+
+  // 2. Real Net Profit Akumulasi (Valuasi Aset Usaha - Modal Disetor)
+  // Memperhitungkan Kas + Stok sisa sebagai Aset, bukan sekadar pengeluaran tunai
+  const allNetProfit = totalAssets - totalCapInjected;
+
+  // 3. Total Dividen / Profit yang Sudah Ditarik Owner
+  const totalDividendsWithdrawn = dbCapOut;
+
+  // 4. Sisa Laba Ditahan / Retained Earnings (Sisa profit yang belum ditarik owner)
+  const remainingProfit = allNetProfit - totalDividendsWithdrawn;
+
+  // 5. ROI
+  const roi = totalCapInjected > 0 ? (allNetProfit / totalCapInjected) * 100 : 0;
 
   const chartData = useMemo(() => {
     const days = Math.round((pEnd - pStart) / 86400000) + 1;
@@ -972,12 +985,13 @@ export default function Finance() {
               (Kas: {fmtRp(totalCash)}) + (Stok: {fmtRp(inventoryValue)})
             </div>
           </div>
+
           <div
             className="kpi-card"
             style={{ background: "var(--color-surface-container-low)" }}
           >
             <div className="kpi-card-header">
-              <span className="kpi-card-label">Modal Aktif (Investasi)</span>
+              <span className="kpi-card-label">Modal Disetor Utama</span>
               <div
                 className="kpi-card-icon"
                 style={{ background: "rgba(255,255,255,0.5)" }}
@@ -986,7 +1000,7 @@ export default function Finance() {
                   className="material-symbols-outlined"
                   style={{ color: "var(--color-secondary)" }}
                 >
-                  trending_up
+                  account_balance
                 </span>
               </div>
             </div>
@@ -994,79 +1008,83 @@ export default function Finance() {
               className="kpi-card-value"
               style={{ color: "var(--color-on-surface)" }}
             >
-              {fmtRp(currInv)}
+              {fmtRp(totalCapInjected)}
             </div>
             <div className="kpi-card-trend neutral">
-              Total Setor Modal - Dividen
+              Modal Awal + Suntik Modal
             </div>
           </div>
+
           <div
             className="kpi-card"
             style={{ background: "var(--color-surface-container-low)" }}
           >
             <div className="kpi-card-header">
-              <span className="kpi-card-label">Total Pendapatan</span>
+              <span className="kpi-card-label">Total Laba Akumulasi</span>
               <div
                 className="kpi-card-icon"
                 style={{ background: "rgba(0,108,73,0.1)", color: "var(--color-tertiary)" }}
+              >
+                <span className="material-symbols-outlined">trending_up</span>
+              </div>
+            </div>
+            <div className="kpi-card-value" style={{ color: "var(--color-on-surface)" }}>
+              {allNetProfit >= 0 ? '+' : ''}{fmtRp(allNetProfit)}
+            </div>
+            <div className="kpi-card-trend neutral">Total Pendapatan - Pengeluaran</div>
+          </div>
+
+          <div
+            className="kpi-card"
+            style={{ background: "var(--color-surface-container-low)" }}
+          >
+            <div className="kpi-card-header">
+              <span className="kpi-card-label">Dividen Sudah Ditarik</span>
+              <div
+                className="kpi-card-icon"
+                style={{ background: "rgba(186,26,26,0.1)", color: "var(--color-error)" }}
               >
                 <span className="material-symbols-outlined">payments</span>
               </div>
             </div>
             <div className="kpi-card-value" style={{ color: "var(--color-on-surface)" }}>
-              {fmtRp(allTimeIncome)}
+              {fmtRp(totalDividendsWithdrawn)}
             </div>
-            <div className="kpi-card-trend neutral">Akumulasi seluruh penjualan</div>
+            <div className="kpi-card-trend neutral">Akumulasi penarikan profit owner</div>
           </div>
-          <div
-            className="kpi-card"
-            style={{ background: "var(--color-surface-container-low)" }}
-          >
-            <div className="kpi-card-header">
-              <span className="kpi-card-label">Total Pengeluaran</span>
-              <div
-                className="kpi-card-icon"
-                style={{ background: "rgba(186,26,26,0.1)", color: "var(--color-error)" }}
-              >
-                <span className="material-symbols-outlined">shopping_cart</span>
-              </div>
-            </div>
-            <div className="kpi-card-value" style={{ color: "var(--color-on-surface)" }}>
-              {fmtRp(allTimeExpense)}
-            </div>
-            <div className="kpi-card-trend neutral">Bahan baku & pakan operasional</div>
-          </div>
+
           <div
             className="kpi-card"
             style={{
               border: "2px solid var(--color-tertiary)",
-              background: "transparent",
+              background: "rgba(0, 108, 73, 0.05)",
             }}
           >
             <div className="kpi-card-header">
-              <span className="kpi-card-label">
-                Real Net Profit
+              <span className="kpi-card-label" style={{ fontWeight: 700, color: "var(--color-tertiary)" }}>
+                Sisa Laba Siap Ditarik
               </span>
               <div
                 className="kpi-card-icon"
                 style={{
-                  background: "rgba(0,108,73,0.1)",
+                  background: "rgba(0,108,73,0.15)",
                   color: "var(--color-tertiary)",
                 }}
               >
-                <span className="material-symbols-outlined">attach_money</span>
+                <span className="material-symbols-outlined">account_balance_wallet</span>
               </div>
             </div>
             <div
               className="kpi-card-value"
-              style={{ color: "var(--color-on-surface)" }}
+              style={{ color: remainingProfit >= 0 ? "var(--color-tertiary)" : "var(--color-error)", fontWeight: 800 }}
             >
-              {allNetProfit >= 0 ? '+' : ''}{fmtRp(allNetProfit)}
+              {remainingProfit >= 0 ? '+' : ''}{fmtRp(remainingProfit)}
             </div>
-            <div className="kpi-card-trend neutral">
-              Total Aset - Modal Aktif
+            <div className="kpi-card-trend neutral" style={{ fontWeight: 500 }}>
+              {remainingProfit >= 0 ? "Laba Ditahan (Siap Ambil)" : "Penarikan Melebihi Laba"}
             </div>
           </div>
+
           <div
             className="kpi-card"
             style={{ background: "var(--color-primary-container)" }}
@@ -1104,7 +1122,7 @@ export default function Finance() {
                 opacity: 0.8,
               }}
             >
-              Laba Bersih / Investasi Berjalan
+              Total Laba / Modal Disetor
             </div>
           </div>
         </div>
@@ -1453,6 +1471,93 @@ export default function Finance() {
                   <option value="capital_out">Tarik Profit (Dividen)</option>
                 </select>
               </div>
+
+              {form.type === "capital_out" && (
+                <div
+                  style={{
+                    background: "var(--color-surface-container-low)",
+                    border: "1px solid var(--color-outline-variant)",
+                    borderRadius: "var(--radius-md)",
+                    padding: 12,
+                    marginBottom: 16,
+                    fontSize: 13,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      marginBottom: 6,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      color: "var(--color-on-surface)",
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined text-primary"
+                      style={{ fontSize: 18 }}
+                    >
+                      account_balance_wallet
+                    </span>
+                    Status Laba & Dividen Usaha
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginTop: 4,
+                      fontSize: 12,
+                    }}
+                  >
+                    <span style={{ color: "var(--color-on-surface-variant)" }}>
+                      Total Laba Bersih Terkumpul:
+                    </span>
+                    <span style={{ fontWeight: 600 }}>
+                      {fmtRp(allNetProfit)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginTop: 4,
+                      fontSize: 12,
+                    }}
+                  >
+                    <span style={{ color: "var(--color-on-surface-variant)" }}>
+                      Dividen Sudah Ditarik:
+                    </span>
+                    <span
+                      style={{ fontWeight: 600, color: "var(--color-error)" }}
+                    >
+                      {fmtRp(totalDividendsWithdrawn)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginTop: 6,
+                      paddingTop: 6,
+                      borderTop: "1px dashed var(--color-outline-variant)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>Sisa Laba Tersisa (Siap Ditarik):</span>
+                    <span
+                      style={{
+                        color:
+                          remainingProfit >= 0
+                            ? "var(--color-tertiary)"
+                            : "var(--color-error)",
+                      }}
+                    >
+                      {remainingProfit >= 0 ? "+" : ""}
+                      {fmtRp(remainingProfit)}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {form.type === "transfer" ? (
                 <>
